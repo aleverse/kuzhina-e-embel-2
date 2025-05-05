@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kuzhina e Ëmbël</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div id="auth-forms">
+        <div id="login-form" class="auth-form">
+            <h2>Hyr</h2>
+            <input type="text" id="login-username" placeholder="Emri i përdoruesit">
+            <input type="password" id="login-password" placeholder="Fjalëkalimi">
+            <button onclick="login()">Hyr</button>
+            <p>Nuk keni llogari? <a href="#" onclick="showRegister()">Regjistrohu</a></p>
+        </div>
+        <div id="register-form" class="auth-form" style="display:none">
+            <h2>Regjistrohu</h2>
+            <input type="text" id="register-username" placeholder="Emri i përdoruesit">
+            <input type="password" id="register-password" placeholder="Fjalëkalimi">
+            <button onclick="register()">Regjistrohu</button>
+            <p>Keni llogari? <a href="#" onclick="showLogin()">Hyr</a></p>
+        </div>
+    </div>
+
+    <div id="app-content" style="display:none">
+        <header>
+            <h1>Kuzhina e Ëmbël</h1>
+            <p>Përshëndetje, <span id="current-user"></span>! <a href="#" onclick="logout()">Dil</a></p>
+        </header>
+        <div class="menu">
+            <div class="search-container">
+                <input type="text" id="searchInput" placeholder="Kërko receta...">
+                <button onclick="performSearch()"><i class="fas fa-search"></i></button>
+            </div>
+            <ul>
+                <li><a href="#trileçe">Trileçe</a></li>
+                <li><a href="#tiramisu">Tiramisu</a></li>
+                <li><a href="#rreth-nesh">Rreth Nesh</a></li>
+                <li><a href="#kontakte">Kontakte</a></li>
+                <li><a href="#receta-të-ruajtura">Receta të Ruajtura</a></li>
+            </ul>
+        </div>
+        <main>
+            <!-- Your existing recipe content here (same as before) -->
+            <div id="trileçe" class="recipe">
+                <!-- Trileçe content -->
+            </div>
+            <div id="tiramisu" class="recipe">
+                <!-- Tiramisu content -->
+            </div>
+            <!-- Other sections -->
+        </main>
+        <footer>
+            <p>© 2024 nga A.L. Të gjitha të drejtat e rezervuara.</p>
+        </footer>
+    </div>
+
+    <script>
+        // User authentication functions
+        function showRegister() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('register-form').style.display = 'block';
+        }
+
+        function showLogin() {
+            document.getElementById('register-form').style.display = 'none';
+            document.getElementById('login-form').style.display = 'block';
+        }
+
+        function register() {
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            
+            if (!username || !password) {
+                alert('Ju lutem plotësoni të gjitha fushat!');
+                return;
+            }
+            
+            // Get existing users or create empty array
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            
+            // Check if username exists
+            if (users.some(user => user.username === username)) {
+                alert('Ky emër përdoruesi ekziston!');
+                return;
+            }
+            
+            // Add new user
+            users.push({ username, password, favorites: [], ratings: {} });
+            localStorage.setItem('users', JSON.stringify(users));
+            
+            alert('Regjistrimi u krye me sukses! Tani mund të hyni.');
+            showLogin();
+        }
+
+        function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const user = users.find(u => u.username === username && u.password === password);
+            
+            if (user) {
+                // Save current user in session
+                localStorage.setItem('currentUser', username);
+                
+                // Show app content
+                document.getElementById('auth-forms').style.display = 'none';
+                document.getElementById('app-content').style.display = 'block';
+                document.getElementById('current-user').textContent = username;
+                
+                // Load user data
+                loadUserData();
+            } else {
+                alert('Emri i përdoruesit ose fjalëkalimi janë gabim!');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('currentUser');
+            document.getElementById('auth-forms').style.display = 'block';
+            document.getElementById('app-content').style.display = 'none';
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+        }
+
+        function loadUserData() {
+            const username = localStorage.getItem('currentUser');
+            if (!username) return;
+            
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const user = users.find(u => u.username === username);
+            
+            if (user) {
+                // Load favorites
+                updateFavoritesList(user.favorites);
+                
+                // Load ratings
+                if (user.ratings) {
+                    for (const recipe in user.ratings) {
+                        const rating = user.ratings[recipe];
+                        const stars = document.querySelectorAll(`.rating[data-recipe="${recipe}"] i`);
+                        stars.forEach((star, index) => {
+                            if (index < rating) {
+                                star.classList.remove('far');
+                                star.classList.add('fas');
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
+        function saveUserData(dataKey, dataValue) {
+            const username = localStorage.getItem('currentUser');
+            if (!username) return;
+            
+            const users = JSON.parse(localStorage.getItem('users') || '[]');
+            const userIndex = users.findIndex(u => u.username === username);
+            
+            if (userIndex !== -1) {
+                users[userIndex][dataKey] = dataValue;
+                localStorage.setItem('users', JSON.stringify(users));
+            }
+        }
+
+        // Check if user is logged in on page load
+        if (localStorage.getItem('currentUser')) {
+            document.getElementById('auth-forms').style.display = 'none';
+            document.getElementById('app-content').style.display = 'block';
+            document.getElementById('current-user').textContent = localStorage.getItem('currentUser');
+            loadUserData();
+        }
+
+        // Search functionality
+        function performSearch() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const recipes = document.querySelectorAll('.recipe');
+            let found = false;
+            
+            recipes.forEach(recipe => {
+                const title = recipe.querySelector('h2').textContent.toLowerCase();
+                const ingredients = Array.from(recipe.querySelectorAll('.përbërësit li')).map(li => li.textContent.toLowerCase());
+                
+                if (title.includes(searchTerm) || ingredients.some(ing => ing.includes(searchTerm))) {
+                    recipe.style.display = 'block';
+                    found = true;
+                } else {
+                    recipe.style.display = 'none';
+                }
+            });
+            
+            if (!found) {
+                alert('Nuk u gjet asnjë recetë me këtë kërkim.');
+                recipes.forEach(recipe => {
+                    recipe.style.display = 'block';
+                });
+            }
+        }
+
+        // Favorite recipes system (updated for user-specific)
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.favorite-btn')) {
+                const btn = e.target.closest('.favorite-btn');
+                const recipeName = btn.dataset.recipe;
+                const username = localStorage.getItem('currentUser');
+                
+                if (!username) {
+                    alert('Ju duhet të hyni për të ruajtur receta!');
+                    return;
+                }
+                
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const userIndex = users.findIndex(u => u.username === username);
+                
+                if (userIndex !== -1) {
+                    const user = users[userIndex];
+                    const favorites = user.favorites || [];
+                    const heartIcon = btn.querySelector('i');
+                    
+                    if (favorites.includes(recipeName)) {
+                        // Remove from favorites
+                        const index = favorites.indexOf(recipeName);
+                        if (index > -1) {
+                            favorites.splice(index, 1);
+                        }
+                        heartIcon.classList.remove('fas');
+                        heartIcon.classList.add('far');
+                    } else {
+                        // Add to favorites
+                        favorites.push(recipeName);
+                        heartIcon.classList.remove('far');
+                        heartIcon.classList.add('fas');
+                    }
+                    
+                    user.favorites = favorites;
+                    localStorage.setItem('users', JSON.stringify(users));
+                    updateFavoritesList(favorites);
+                }
+            }
+        });
+
+        function updateFavoritesList(favorites) {
+            const favoritesList = document.getElementById('favorites-list');
+            const noFavoritesMessage = document.getElementById('no-favorites-message');
+            
+            favoritesList.innerHTML = '';
+            
+            if (favorites.length === 0) {
+                noFavoritesMessage.style.display = 'block';
+            } else {
+                noFavoritesMessage.style.display = 'none';
+                
+                favorites.forEach(recipeName => {
+                    const recipeElement = document.getElementById(recipeName);
+                    if (recipeElement) {
+                        const clone = recipeElement.cloneNode(true);
+                        clone.classList.add('favorite-recipe');
+                        
+                        // Remove the favorite button from the clone
+                        const favoriteBtn = clone.querySelector('.favorite-btn');
+                        if (favoriteBtn) {
+                            favoriteBtn.remove();
+                        }
+                        
+                        favoritesList.appendChild(clone);
+                    }
+                });
+            }
+        }
+
+        // Rating system (updated for user-specific)
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('fa-star')) {
+                const star = e.target;
+                const ratingElement = star.closest('.rating');
+                const recipeName = ratingElement.dataset.recipe;
+                const value = parseInt(star.dataset.value);
+                const username = localStorage.getItem('currentUser');
+                
+                if (!username) {
+                    alert('Ju duhet të hyni për të vlerësuar receta!');
+                    return;
+                }
+                
+                const users = JSON.parse(localStorage.getItem('users') || '[]');
+                const userIndex = users.findIndex(u => u.username === username);
+                
+                if (userIndex !== -1) {
+                    const user = users[userIndex];
+                    if (!user.ratings) user.ratings = {};
+                    
+                    // Update UI
+                    const stars = ratingElement.querySelectorAll('i');
+                    stars.forEach((s, index) => {
+                        if (index < value) {
+                            s.classList.remove('far');
+                            s.classList.add('fas');
+                        } else {
+                            s.classList.remove('fas');
+                            s.classList.add('far');
+                        }
+                    });
+                    
+                    // Save rating
+                    user.ratings[recipeName] = value;
+                    localStorage.setItem('users', JSON.stringify(users));
+                }
+            }
+        });
+    </script>
+</body>
+</html>

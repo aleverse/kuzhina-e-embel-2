@@ -1,0 +1,45 @@
+/* Add these to your existing CSS */
+#auth-forms {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #f8f8f8;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.auth-form input {
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+.auth-form button {
+    padding: 10px;
+    background-color: #b3568f;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.auth-form a {
+    color: #b3568f;
+    text-decoration: none;
+}
+
+#app-content header p {
+    text-align: center;
+    margin: 5px 0;
+}
+
+#app-content header a {
+    color: #b3568f;
+    text-decoration: none;
+}
